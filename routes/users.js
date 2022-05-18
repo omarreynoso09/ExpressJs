@@ -1,6 +1,6 @@
 var express = require("express");
 var router = express.Router();
-const favMovies = ["Godfather", "Avatar", "Scarface"];
+const favFood = ["Mangu", "Seafood", "Steak", "Rice"];
 
 /* GET users listing. */
 router.get("/", function (req, res, next) {
