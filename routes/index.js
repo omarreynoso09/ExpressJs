@@ -1,14 +1,9 @@
-var express = require("express");
-const { route } = require("./datetime");
+var express = require('express');
 var router = express.Router();
 
-/* home page. */
-router.get("/", function (req, res, next) {
-  res.render("index", { title: "Express" });
-});
-
-router.get("/datetime", function (req, res, next) {
-  res.send(new Date());
+/* GET home page. */
+router.get('/', function(req, res, next) {
+  res.render('index', { title: 'Express' });
 });
 
 module.exports = router;

@@ -3,10 +3,14 @@ var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
+
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 var datetimeRouter = require("./routes/datetime");
 var blogsRouter = require("./routes/blogs");
+
+var { mongoConnect } = require("./mongo.js");
+mongoConnect();
 var app = express();
 
 // view engine setup

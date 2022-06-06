@@ -1,9 +1,14 @@
-var express = require("express");
+var express = require('express');
 var router = express.Router();
 
-/*  home page. */
-router.get("/", function (req, res, next) {
-  res.send(new Date());
+/* GET datetime listing. */
+router.get('/', function(req, res, next) {
+  res.send(date.toString());
 });
 
 module.exports = router;
+
+/* HELPER Functions */
+let date = new Date();
+
+

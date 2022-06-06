@@ -1,100 +1,171 @@
 var express = require("express");
-const { route } = require("../app");
 var router = express.Router();
-var blogs = require("../public/sampleBlogs");
+
+var blogs = require("../public/javascripts/sampleBlogs");
 const blogPosts = blogs.blogPosts;
 
-//http://localhost:4000/blogs
-router.get("/", function (req, res, next) {
-  res.json(blogPosts);
-});
+const { blogsDB } = require("../mongo");
+const { Db } = require("mongodb");
 
-//http://localhost:4000/blogs/all
-router.get("/all", function (req, res, next) {
-  let sort = req.query.sort;
-  res.json(sortBlogs(sort));
-});
-
-let sortBlogs = (order) => {
-  if (order === "asc") {
-    return blogPosts.sort(function (a, b) {
-      return new Date(a.createdAt) - new Date(b.createdAt);
-    });
-  } else if (order === "desc") {
-    return blogPosts.sort(function (a, b) {
-      return new Date(b.createdAt) - new Date(a.createdAt);
-    });
-  } else {
-    return blogPosts;
+router.get("/", async function (req, res, next) {
+  try {
+    const collection = await blogsDB().collection("blogs50");
+    const blogs50 = await collection.find({}).toArray();
+    res.json(blogs50);
+  } catch (error) {
+    res.status(500).send("Error fetching posts." + error);
   }
-};
-
-//http://localhost:4000/blogs/getblogbyid/?blogid=4  using query params
-router.get("/getblogbyid", (req, res) => {
-  // extract blogid from query
-  const queryBlogId = req.query.blogid;
-
-  const foundBlog = blogPosts.find((blog) => {
-    return blog.id === queryBlogId;
-  });
-
-  // return blogpost
-  res.json(foundBlog);
 });
 
-//http://localhost:4000/blogs/singleblog/4  using route params
-router.get("/singleblog/:blogId", (req, res) => {
-  const routeBlogId = req.params.blogId;
-
-  // find the blogpost that has an id that matches the param blogid
-  const foundBlog = blogPosts.find((blog) => {
-    return blog.id === routeBlogId;
-  });
-
-  // return blogpost
-  res.json(foundBlog);
+router.get("/all", async function (req, res, next) {
+  try {
+    let sortField = req.query.sortField;
+    let sortOrder = req.query.sortOrder;
+    if (sortOrder === "asc") {
+      sortOrder = 1;
+    }
+    if (sortOrder === "desc") {
+      sortOrder = -1;
+    }
+    const collection = await blogsDB().collection("blogs50");
+    const blogs50 = await collection
+      .find({})
+      .sort({
+        [sortField]: sortOrder,
+      })
+      .toArray();
+    res.json(blogs50);
+  } catch (error) {
+    res.status(500).send("Error fetching posts." + error);
+  }
 });
 
-// * Create a new route /postblog and use the res.render() method to display this page to the browser.
-router.get("/postblog", function (req, res, next) {
+// Display Single blog by id router
+router.get("/singleBlog/:blogId", async function (req, res, next) {
+  try {
+    const blogId = Number(req.params.blogId) - 1;
+    const collection = await blogsDB().collection("blogs50");
+    // const blogs50 = await collection.findOne({ id: Number(blogId) });
+    const blogs = await collection.find({}).toArray();
+    const foundBlog = blogs[blogId];
+    res.json(foundBlog);
+  } catch (error) {
+    res.status(500).send("Error fetching posts." + error);
+  }
+});
+
+router.get("/postBlog", function (req, res, next) {
   res.render("postBlog");
 });
 
-router.post("/submit", function (req, res, next) {
-  console.log(req.body);
-  console.log("bloglist before ", blogPosts);
-  const today = new Date();
-  const newPost = {
-    title: req.body.title,
-    text: req.body.text,
-    author: req.body.author,
-    createdAt: today.toISOString(),
-    id: String(blogPosts.length + 1),
-  };
-  blogPosts.push(newPost);
-  console.log("bloglist after ", blogPosts);
+router.post("/submit", async function (req, res, next) {
+  try {
+    const collection = await blogsDB().collection("blogs50");
+    const id = await collection.count();
 
-  res.send("OK");
+    const newPost = {
+      title: req.body.title,
+      text: req.body.text,
+      author: req.body.author,
+      createdAt: new Date(),
+      lastModified: new Date(),
+      category: req.body.category,
+      id: Number(id + 1),
+    };
+
+    await collection.insertOne(newPost);
+    res.send("Post has been submitted");
+  } catch (error) {
+    res.status(500).send("Error fetching posts." + error);
+  }
 });
 
-router.get("/displayBlogs", function (req, res, next) {
+// Display Blogs Router
+router.get("/displayBlogs", (req, res, next) => {
   res.render("displayBlogs");
 });
 
-router.get("/displaySingleBlog", function (req, res, next) {
+// Display Single Blog Router
+router.get("/displaySingleBlog", (req, res, next) => {
   res.render("displaySingleBlog");
 });
 
-router.delete("/deleteBlog/:blogId", (req, res) => {
-  const blogToDelete = req.params.blogId;
-  console.log(blogToDelete);
-  for (let i = 0; i < blogPosts.length; i++) {
-    let blog = blogPosts[i];
-    if (blog.id === blogToDelete) {
-      blogPosts.splice(i, 1);
-    }
+router.put("/update-blog/:blogId", async function (req, res) {
+  try {
+    const collection = await blogsDB().collection("blogs50");
+    const blogId = Number(req.params.blogId) - 1;
+    console.log(blogId);
+    const blogs = await collection.find({}).toArray();
+    const originalBlog = blogs[blogId];
+    console.log(originalBlog);
+    let updateBlog = req.body;
+
+    const blogTitle = updateBlog.title ? updateBlog.title : originalBlog.title;
+    const blogText = updateBlog.text ? updateBlog.text : originalBlog.text;
+    const blogAuthor = updateBlog.author
+      ? updateBlog.author
+      : originalBlog.author;
+    const blogCategory = updateBlog.category
+      ? updateBlog.category
+      : originalBlog.category;
+
+    updateBlog = {
+      lastModified: new Date(),
+      title: blogTitle,
+      text: blogText,
+      author: blogAuthor,
+      category: blogCategory,
+      id: blogId + 1,
+    };
+    console.log(updateBlog);
+    console.log(originalBlog._id);
+    await collection.updateOne({ _id: originalBlog._id }, { $set: updateBlog });
+    res.json("OK");
+  } catch (error) {
+    res.status(500).send("Error fetching posts." + error);
   }
-  res.send("Successfully Deleted");
 });
 
+/* HELPER FUNCTIONS */
+
+// Find Blog Id
+// Take 'id' from object in 'blogs' array as a parameter.
+let findBlogId = (id) => {
+  for (let i = 0; i < blogPosts.length; i++) {
+    // At each iteration of blogs array
+    let blog = blogPosts[i];
+    if (blog.id === id) {
+      return blog;
+    }
+  }
+};
+
+let addBlogPost = (body) => {
+  let id = blogPosts.length + 1;
+  newDate = new Date();
+  let blog = {
+    createdAt: newDate.toISOString(),
+    title: body.title,
+    text: body.text,
+    author: body.author,
+    id: id.toString(),
+  };
+  return blog;
+};
+
 module.exports = router;
+
+// Sort Blog Array into ascending or descending order
+// let sortBlogs = (order) => {
+//   if (order === "asc") {
+//     return blogPosts.sort(function (a, b) {
+//       return new Date(a.createdAt) - new Date(b.createdAt);
+//     });
+//   } else if (order === "desc") {
+//     return blogPosts.sort(function (a, b) {
+//       return new Date(b.createdAt) - new Date(a.createdAt);
+//     });
+//   } else {
+//     return blogPosts;
+//   }
+// };
