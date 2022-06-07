@@ -1,8 +1,67 @@
 body {
   padding: 50px;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+  background-color: aliceblue;
+}
+h1 {
+  font-family: "Times New Roman", Times, serif;
+  font-weight: 700;
+  font-size: 3em;
+  text-align: center;
 }
 
 a {
-  color: #00B7FF;
+  color: #00b7ff;
+  margin: 12px;
+  display: inline;
+  text-align: center;
+  text-decoration: none;
+}
+
+a:active {
+  color: black;
+}
+
+a:hover {
+  text-decoration: underline;
+  color: red;
+}
+
+label {
+  font-size: medium;
+  color: blue;
+  margin: 20px 20px 10px;
+}
+
+#sortField,
+#sortOrder,
+#authorName {
+  width: 200px;
+  height: 30px;
+  text-align: center;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+button,
+#submit,
+#update {
+  width: 180px;
+  height: 40px;
+  font-size: 18px;
+  background-color: lightblue;
+  border-radius: 15px;
+}
+button:hover,
+#submit:hover,
+#update:hover {
+  background-color: black;
+  color: white;
+}
+
+p {
+  border: 1px solid red;
+}
+li {
+  margin-bottom: 5px;
 }
